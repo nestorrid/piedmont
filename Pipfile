@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+verify_ssl = false
+name = "pip_conf_index_global"
+
+[packages]
+requests = "*"
+python-socketio = "*"
+websocket-client = "*"
+pyserial = "*"
+pyserial-asyncio = "*"
+
+[dev-packages]
+pytest = "*"
+
+[requires]
+python_version = "3.12"
+python_full_version = "3.12.1"
