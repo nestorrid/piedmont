@@ -1,0 +1,46 @@
+################################################################
+# Basic configuration of PP Bridge App
+################################################################
+bridge:
+  # The name of the bridge app, it will shown in the ProtoPie Connect as message source.
+  name: Bridge App 
+  # The ProtoPie Connect host address
+  host: http://localhost
+  # The ProtoPie Connect port
+  port: 9981
+
+################################################################
+# Logging configuration
+################################################################
+logging:
+  level: DEBUG
+  console:
+    level: INFO
+    format: "> %(asctime)s [%(levelname)s]:\n\t%(message)s"
+  file:
+    level: DEBUG
+    name: piedmont.log
+    format: "%(asctime)s [%(name)s][%(levelname)s]:\t%(message)s"
+
+################################################################
+# Serial configuration
+################################################################
+serial:
+  # The separator of serial message. It will divide the message into message name and data;
+  # for example:
+  #
+  #   KNOB_GEAR_SHIFT::N
+  # 
+  # This is a message received from serial, `KNOB_GEAR_SHIFT` will be the name of the message.
+  # `N` will be the data of the message, it will be send to the message handler function.
+  separator: "::"
+  # Serial port to your board.
+  # Change this to your own port before start the plugin.
+  port: /dev/cu.usbmodem144201
+  baudrate: 115200
+  timeout: 1
+
+################################################################
+# Options configuration, optional
+################################################################
+options:

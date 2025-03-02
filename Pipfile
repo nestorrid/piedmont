@@ -9,6 +9,7 @@ python-socketio = "*"
 websocket-client = "*"
 pyserial = "*"
 pyserial-asyncio = "*"
+pyyaml = "*"
 
 [dev-packages]
 pytest = "*"
