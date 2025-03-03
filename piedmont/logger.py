@@ -31,7 +31,7 @@ def setup_console_handler(config: t.Dict):
 def setup_file_handler(config: t.Dict):
     setup_handler(config, logging.FileHandler(config['name'], mode='a'))
     logger.debug(
-        f'\n{'=' * 41}\n{">"*15} LOG START {"<"*15}\n{'=' * 41}')
+        f'\n{"=" * 41}\n{">"*15} LOG START {"<"*15}\n{"=" * 41}')
 
 
 def create_logger(config: t.Dict):

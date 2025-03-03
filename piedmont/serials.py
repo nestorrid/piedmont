@@ -11,7 +11,7 @@ from .logger import logger
 
 class SerialClient:
 
-    ser: serial.Serial
+    ser: serial.Serial = None
     handler_mapper = {}
 
     def __init__(self, config: t.Dict):
@@ -40,7 +40,7 @@ class SerialClient:
                 baudrate=self.baudrate,
                 timeout=self.timeout
             )
-            logger.debug(
+            logger.info(
                 f'Connected to port: {self.port}, baudrate: {self.baudrate}')
         except serial.SerialException as e:
             logger.error(f'Serial error: {e}')
@@ -48,13 +48,13 @@ class SerialClient:
     def disconnect(self):
         if self.ser and self.ser.is_open:
             self.ser.close()
-            logger.debug(f'Disconnect from port {self.port}')
+            logger.info(f'Disconnect from port {self.port}')
 
     def __del__(self):
         self.disconnect()
 
     def _reading_serial(self):
-        logger.debug(f'Start listening on port {format(self.port)}.')
+        logger.info(f'Start listening on port {format(self.port)}.')
         try:
             while True:
                 if self.ser.in_waiting:

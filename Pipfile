@@ -8,11 +8,17 @@ requests = "*"
 python-socketio = "*"
 websocket-client = "*"
 pyserial = "*"
-pyserial-asyncio = "*"
 pyyaml = "*"
+vistir = "==0.5.2"
 
 [dev-packages]
 pytest = "*"
+setuptools = "*"
+wheel = "*"
+build = "*"
+pipenv-setup = "*"
+vistir = "*"
+twine = "*"
 
 [requires]
 python_version = "3.12"

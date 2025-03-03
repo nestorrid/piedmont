@@ -24,7 +24,9 @@ class BridgeClient:
         super().__init__()
         self.handler_mapper = {}
         self.app_name = config.get('name', 'BridgeApp')
-        self.address = f'{config.get('host', 'http://localhost')}:{config.get('port', 9981)}'
+        host = config.get('host', 'http://localhost')
+        port = config.get('port', 9981)
+        self.address = f'{host}:{port}'
         self._regist_handlers()
         self.client.connect(self.address)
 
@@ -34,10 +36,10 @@ class BridgeClient:
         self.client.on('disconnect', self._client_disconnect)
 
     def _client_disconnect(self):
-        logger.debug(f'Disconnecting from: "{self.address}"')
+        logger.info(f'Disconnecting from: "{self.address}"')
 
     def _client_connect(self):
-        logger.debug(f'Connect to: "{self.address}"')
+        logger.info(f'Connect to: "{self.address}"')
         self.client.emit(PP_BRIDGE_APP, {'name': self.app_name})
 
     def _message_handler(self, data):
@@ -45,11 +47,11 @@ class BridgeClient:
         logger.debug(f'Receive message: "{msgId}"')
         handler = self.handler_mapper.get(msgId, None)
         if handler:
-            logger.debug(
+            logger.info(
                 f'Receive message from ProtoPie Connect.\n\tMessage: `{msgId}`,\n\tData: `{data}`,\n\tHandler: `{handler.__name__}`')
             handler(data.get('value', None))
         else:
-            logger.debug(f'No handler for message: "{msgId}"')
+            logger.info(f'No handler for message: "{msgId}"')
 
     def regist_bridge_handler(self, messageId: str, handler: T_Handler):
         old_func = self.handler_mapper.get(messageId, None)
