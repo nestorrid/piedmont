@@ -6,6 +6,7 @@ import functools
 
 from .bridge import BridgeClient
 from .config import Config
+from . import logger
 
 
 class Piedmont():
@@ -13,10 +14,15 @@ class Piedmont():
     _bridge_client: BridgeClient
 
     def __init__(
-            self, config: Config = None
+            self,
+            config: Config = None,
+            log: bool = False
+
     ) -> None:
         super().__init__()
         self._bridge_client = BridgeClient(config)
+        if log:
+            logger.set_dev_mode()
 
     def bridge(self, messageId: str, **options: t.Any):
         def decorator(func):
