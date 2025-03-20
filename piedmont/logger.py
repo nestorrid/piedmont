@@ -1,43 +1,69 @@
 import logging
+import logging.config
 import typing as t
+import sys
 
+# 定义日志配置字典
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': "$ %(asctime)s [%(name)s][%(levelname)s]:\n> %(message)s"
+        },
+        'detailed': {
+            'format': "$ %(asctime)s [%(name)s][%(levelname)s][%(threadName)s:%(process)d]::%(module)s::\n> %(message)s"
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'formatter': 'simple',
+            'stream': sys.stdout
+        },
+        'current': {
+            'class': 'logging.FileHandler',
+            'level': 'DEBUG',
+            'formatter': 'detailed',
+            'filename': 'piedmont.log',
+            'mode': 'w'
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'INFO',
+            'formatter': 'detailed',
+            'filename': 'piedmont.rotating.log',
+            'maxBytes': 10485760,
+            'backupCount': 5
+        },
+        'error_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'ERROR',
+            'formatter': 'detailed',
+            'filename': 'piedmont.error.log',
+            'maxBytes': 10485760,
+            'backupCount': 5
+        }
+    },
+    'loggers': {
+        'piedmont-dev': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'current', 'file', 'error_file'],
+            'propagate': False
+        },
+        'piedmont': {
+            'level': 'INFO',
+            'handlers': ['console', 'error_file'],
+            'propagate': False
+        }
+    }
+}
 
-def default_logger():
-    logger = logging.getLogger("Piedmont")
-    # logger.setLevel(logging.INFO)
-    # console_handler = logging.StreamHandler()
-    # fmt = logging.Formatter(
-    #     '> %(asctime)s [%(name)s][%(levelname)s]:\n\t%(message)s')
-    # console_handler.setFormatter(fmt)
-    # logger.addHandler(console_handler)
-    return logger
+logging.config.dictConfig(LOGGING_CONFIG)
 
+devlogger = logging.getLogger('piedmont-dev')
+logger = logging.getLogger('piedmont')
 
-logger = default_logger()
-
-
-def setup_handler(config: t.Dict, handler: logging.Handler):
-    if config.get('level'):
-        handler.setLevel(config.get('level'))
-    fmt = logging.Formatter(config['format'])
-    handler.setFormatter(fmt)
-    logger.addHandler(handler)
-
-
-def setup_console_handler(config: t.Dict):
-    setup_handler(config, logging.StreamHandler())
-
-
-def setup_file_handler(config: t.Dict):
-    setup_handler(config, logging.FileHandler(config['name'], mode='a'))
-    logger.debug(
-        f'\n{"=" * 41}\n{">"*15} LOG START {"<"*15}\n{"=" * 41}')
-
-
-def create_logger(config: t.Dict):
-    logger = logging.getLogger('Piedmont')
-    logger.setLevel(config.get('level', 'DEBUG'))
-    if 'console' in config.keys():
-        setup_console_handler(config['console'])
-    if 'file' in config.keys():
-        setup_file_handler(config['file'])
+devlogger.debug(
+    f'\n{"=" * 51}\n{">"*20} LOG START {"<"*20}\n{"=" * 51}')

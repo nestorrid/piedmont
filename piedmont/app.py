@@ -5,27 +5,23 @@ import functools
 
 
 from .bridge import BridgeClient
-from .serials import SerialClient
-from .typing import T_PP_Message_Payload
-from .config import PiedmontConfig
-from .logger import logger
+from .config import Config
+from .logger import devlogger
 
 
-class Piedmont(PiedmontConfig):
+class Piedmont():
 
-    bridge_client: BridgeClient
-    serial_client: SerialClient
+    _bridge_client: BridgeClient
 
     def __init__(
-            self, conf_path: str = 'config.yaml',
+            self, config: Config = None
     ) -> None:
-        super().__init__(conf_path)
-        self.bridge_client = BridgeClient(self.bridge_conf)
-        self.serial_client = SerialClient(self.serial_conf)
+        super().__init__()
+        self._bridge_client = BridgeClient(config)
 
     def bridge(self, messageId: str, **options: t.Any):
         def decorator(func):
-            self.bridge_client.regist_bridge_handler(messageId.upper(), func)
+            self._bridge_client.regist_bridge_handler(messageId.upper(), func)
 
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -43,8 +39,8 @@ class Piedmont(PiedmontConfig):
             return wrapper
         return decorator
 
-    def send_pp_connection(self, messageId: str, value: T_PP_Message_Payload):
-        self.bridge_client.send(messageId.upper(), value)
+    def send(self, messageId: str, value: T_PP_Message_Payload = "", uppercase=True):
+        if uppercase:
+            messageId = messageId.upper()
 
-    def send_serial(self):
-        pass
+        self._bridge_client.send(messageId, value)

@@ -1,25 +1,22 @@
 [[source]]
+name = "pip_conf_index_global"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
 verify_ssl = false
-name = "pip_conf_index_global"
 
 [packages]
-requests = "*"
 python-socketio = "*"
-websocket-client = "*"
-pyserial = "*"
 pyyaml = "*"
-vistir = "==0.5.2"
+requests = "*"
+websocket-client = "*"
 
 [dev-packages]
-pytest = "*"
-setuptools = "*"
-wheel = "*"
 build = "*"
 pipenv-setup = "*"
-vistir = "*"
+pytest = "*"
+setuptools = "*"
 twine = "*"
+wheel = "*"
 
 [requires]
-python_version = "3.12"
 python_full_version = "3.12.1"
+python_version = "3.12"

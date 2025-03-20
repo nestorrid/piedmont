@@ -3,11 +3,11 @@ from __future__ import annotations
 import socketio
 import json
 import typing as t
-import logging
 
-from .typing import T_Handler, T_Mapper, T_PP_Message_Payload
+from .typing import T_Handler, T_Mapper
 from .errors import DuplicateHandlerError
-from .logger import logger
+from .logger import logger, devlogger
+from .config import Config
 
 PP_BRIDGE_APP = 'ppBridgeApp'
 PP_MESSAGE = 'ppMessage'
@@ -20,13 +20,11 @@ class BridgeClient:
     address: str
     handler_mapper: T_Mapper
 
-    def __init__(self, config: t.Dict):
+    def __init__(self, config: Config):
         super().__init__()
         self.handler_mapper = {}
-        self.app_name = config.get('name', 'BridgeApp')
-        host = config.get('host', 'http://localhost')
-        port = config.get('port', 9981)
-        self.address = f'{host}:{port}'
+        self.config = config or Config()
+        self.address = f'{self.config.host}:{self.config.port}'
         self._regist_handlers()
         self.client.connect(self.address)
 
@@ -40,18 +38,18 @@ class BridgeClient:
 
     def _client_connect(self):
         logger.info(f'Connect to: "{self.address}"')
-        self.client.emit(PP_BRIDGE_APP, {'name': self.app_name})
+        self.client.emit(PP_BRIDGE_APP, {'name': self.config.app_name})
 
     def _message_handler(self, data):
         msgId = data['messageId'].upper()
-        logger.debug(f'Receive message: "{msgId}"')
+        devlogger.debug(f'Receive message: "{msgId}"')
         handler = self.handler_mapper.get(msgId, None)
         if handler:
             logger.info(
                 f'Receive message from ProtoPie Connect.\n\tMessage: `{msgId}`,\n\tData: `{data}`,\n\tHandler: `{handler.__name__}`')
             handler(data.get('value', None))
         else:
-            logger.info(f'No handler for message: "{msgId}"')
+            devlogger.info(f'No handler for message: "{msgId}"')
 
     def regist_bridge_handler(self, messageId: str, handler: T_Handler):
         old_func = self.handler_mapper.get(messageId, None)
@@ -60,7 +58,7 @@ class BridgeClient:
 
         self.handler_mapper[messageId] = handler
 
-    def send(self, messageId: str, value: T_PP_Message_Payload):
+    def send(self, messageId: str, value: t.Union[str, t.List[t.Any], t.Dict[t.AnyStr, t.Any]]):
         if isinstance(value, str):
             data = value
         else:

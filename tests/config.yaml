@@ -1,13 +1,12 @@
 ################################################################
 # Basic configuration of PP Bridge App
 ################################################################
-bridge:
-  # The name of the bridge app, it will shown in the ProtoPie Connect as message source.
-  name: Bridge App 
-  # The ProtoPie Connect host address
-  host: http://localhost
-  # The ProtoPie Connect port
-  port: 9981
+# The name of the bridge app, it will shown in the ProtoPie Connect as message source.
+name: Bridge App 
+# The ProtoPie Connect host address
+host: http://localhost
+# The ProtoPie Connect port
+port: 9981
 
 ################################################################
 # Logging configuration
