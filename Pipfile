@@ -11,6 +11,7 @@ websocket-client = "*"
 
 [dev-packages]
 build = "*"
+packaging = "*"
 pipenv-setup = "*"
 pytest = "*"
 setuptools = "*"
