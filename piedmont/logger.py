@@ -1,9 +1,10 @@
 import logging
 import logging.config
+import logging.handlers
 import typing as t
 import sys
 
-# 定义日志配置字典
+
 LOGGING_CONFIG = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -11,9 +12,6 @@ LOGGING_CONFIG = {
         'simple': {
             'format': "$ %(asctime)s [%(name)s][%(levelname)s]:\n> %(message)s"
         },
-        'detailed': {
-            'format': "$ %(asctime)s [%(name)s][%(levelname)s][%(threadName)s:%(process)d]::%(module)s::\n> %(message)s"
-        }
     },
     'handlers': {
         'console': {
@@ -22,21 +20,8 @@ LOGGING_CONFIG = {
             'formatter': 'simple',
             'stream': sys.stdout
         },
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'level': 'INFO',
-            'formatter': 'detailed',
-            'filename': 'piedmont.log',
-            'maxBytes': 10485760,
-            'backupCount': 5
-        },
     },
     'loggers': {
-        'piedmont-dev': {
-            'level': 'CRITICAL',
-            'handlers': ['console', 'file'],
-            'propagate': False
-        },
         'piedmont': {
             'level': 'INFO',
             'handlers': ['console'],
@@ -70,13 +55,37 @@ def critical(msg: object, *args, **kwargs):
     logger.critical(msg, *args, **kwargs)
 
 
+def _create_dev_logger():
+    l = logging.getLogger('piedmont-dev')
+    l.setLevel(logging.DEBUG)
+    h1 = logging.handlers.RotatingFileHandler('piedmont.log')
+    h1.setLevel(logging.DEBUG)
+    h2 = logging.StreamHandler(sys.stdout)
+    h1.setLevel(logging.DEBUG)
+    fmt_s = logging.Formatter(
+        "$ %(asctime)s [%(name)s][%(levelname)s]:\n> %(message)s")
+    fmt_d = logging.Formatter(
+        "$ %(asctime)s [%(name)s][%(levelname)s][%(threadName)s:%(process)d]::%(module)s::\n> %(message)s")
+    h1.setFormatter(fmt_d)
+    h2.setFormatter(fmt_s)
+    l.addHandler(h1)
+    l.addHandler(h2)
+
+    return l
+
+
+_dev_logger: logging.Logger = None
+
+
 def devlog(msg: object, level=logging.DEBUG, *args, **kwargs):
-    logging.getLogger('piedmont-dev').log(level, msg, *args, **kwargs)
+    if _dev_logger:
+        _dev_logger.log(level, msg, *args, **kwargs)
 
 
 def set_dev_mode(flag=True):
+    global _dev_logger
     if flag:
-        logging.getLogger('piedmont-dev').setLevel(logging.DEBUG)
+        _dev_logger = _create_dev_logger()
         devlog(f'\n{"=" * 48}\n{">"*15} PIEDMONT DEV LOG {"<"*15}\n{"=" * 48}')
     else:
         logging.getLogger('piedmont-dev').setLevel(logging.CRITICAL)
