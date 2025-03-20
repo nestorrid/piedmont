@@ -6,7 +6,6 @@ import functools
 
 from .bridge import BridgeClient
 from .config import Config
-from .logger import devlogger
 
 
 class Piedmont():
@@ -42,5 +41,4 @@ class Piedmont():
     def send(self, messageId: str, value: t.Union[str, t.List[t.Any], t.Dict[t.AnyStr, t.Any]] = "", uppercase=True):
         if uppercase:
             messageId = messageId.upper()
-
         self._bridge_client.send(messageId, value)

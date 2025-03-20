@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     dependency_links=[],
     name="piedmont",
-    version="0.1.4",
+    version="0.1.5",
     description="A python library that helps you to build ProtoPie Bridge App or plugin more efficiently",
     long_description=open("README.md").read(),
     long_description_content_type=("text/markdown"),

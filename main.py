@@ -1,4 +1,5 @@
 from piedmont import Piedmont
+from piedmont import logger
 
 pie = Piedmont()
 
@@ -9,6 +10,7 @@ def handler(data):
 
 
 if __name__ == "__main__":
+    # logger.set_dev_mode()
     try:
         while True:
             pass

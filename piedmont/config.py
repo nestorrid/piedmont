@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from .logger import logger, devlogger
+from .logger import logger, _devlogger
 
 
 class BaseConfig(dict):
@@ -42,7 +42,7 @@ class FileConfig(BaseConfig):
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 temp = yaml.safe_load(f)
-                devlogger.debug(f'load config from file: {temp}')
+                _devlogger.debug(f'load config from file: {temp}')
                 self.app_name = temp['name']
                 self.host = temp['host']
                 self.port = temp['port']

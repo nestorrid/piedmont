@@ -48,7 +48,7 @@ LOGGING_CONFIG = {
     },
     'loggers': {
         'piedmont-dev': {
-            'level': 'DEBUG',
+            'level': 'CRITICAL',
             'handlers': ['console', 'current', 'file', 'error_file'],
             'propagate': False
         },
@@ -62,8 +62,37 @@ LOGGING_CONFIG = {
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-devlogger = logging.getLogger('piedmont-dev')
+_devlogger = logging.getLogger('piedmont-dev')
 logger = logging.getLogger('piedmont')
 
-devlogger.debug(
-    f'\n{"=" * 51}\n{">"*20} LOG START {"<"*20}\n{"=" * 51}')
+
+def info(msg: object, *args, **kwargs):
+    logger.info(msg, *args, **kwargs)
+
+
+def debug(msg: object, *args, **kwargs):
+    logger.debug(msg, *args, **kwargs)
+
+
+def warning(msg: object, *args, **kwargs):
+    logger.warning(msg, *args, **kwargs)
+
+
+def error(msg: object, *args, **kwargs):
+    logger.error(msg, *args, **kwargs)
+
+
+def critical(msg: object, *args, **kwargs):
+    logger.critical(msg, *args, **kwargs)
+
+
+def devlog(msg: object, level=logging.DEBUG, *args, **kwargs):
+    _devlogger.log(level, msg, *args, **kwargs)
+
+
+def set_dev_mode(flag=True):
+    if flag:
+        _devlogger.setLevel(logging.DEBUG)
+        devlog(f'\n{"=" * 51}\n{">"*20} LOG START {"<"*20}\n{"=" * 51}')
+    else:
+        _devlogger.setLevel(logging.CRITICAL)

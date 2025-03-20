@@ -6,7 +6,7 @@ import typing as t
 
 from .typing import T_Handler, T_Mapper
 from .errors import DuplicateHandlerError
-from .logger import logger, devlogger
+from . import logger
 from .config import Config
 
 PP_BRIDGE_APP = 'ppBridgeApp'
@@ -42,14 +42,14 @@ class BridgeClient:
 
     def _message_handler(self, data):
         msgId = data['messageId'].upper()
-        devlogger.debug(f'Receive message: "{msgId}"')
+        logger.devlog(f'Receive message: "{msgId}"')
         handler = self.handler_mapper.get(msgId, None)
         if handler:
             logger.info(
                 f'Receive message from ProtoPie Connect.\n\tMessage: `{msgId}`,\n\tData: `{data}`,\n\tHandler: `{handler.__name__}`')
             handler(data.get('value', None))
         else:
-            devlogger.info(f'No handler for message: "{msgId}"')
+            logger.devlog(f'No handler for message: "{msgId}"')
 
     def regist_bridge_handler(self, messageId: str, handler: T_Handler):
         old_func = self.handler_mapper.get(messageId, None)
