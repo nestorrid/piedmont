@@ -10,7 +10,7 @@ def handler(data):
 
 
 if __name__ == "__main__":
-    # logger.set_dev_mode()
+    logger.set_dev_mode()
     try:
         while True:
             pass

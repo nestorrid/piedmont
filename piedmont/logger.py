@@ -22,39 +22,24 @@ LOGGING_CONFIG = {
             'formatter': 'simple',
             'stream': sys.stdout
         },
-        'current': {
-            'class': 'logging.FileHandler',
-            'level': 'DEBUG',
-            'formatter': 'detailed',
-            'filename': 'piedmont.log',
-            'mode': 'w'
-        },
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
             'level': 'INFO',
             'formatter': 'detailed',
-            'filename': 'piedmont.rotating.log',
+            'filename': 'piedmont.log',
             'maxBytes': 10485760,
             'backupCount': 5
         },
-        'error_file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'level': 'ERROR',
-            'formatter': 'detailed',
-            'filename': 'piedmont.error.log',
-            'maxBytes': 10485760,
-            'backupCount': 5
-        }
     },
     'loggers': {
         'piedmont-dev': {
             'level': 'CRITICAL',
-            'handlers': ['console', 'current', 'file', 'error_file'],
+            'handlers': ['console', 'file'],
             'propagate': False
         },
         'piedmont': {
             'level': 'INFO',
-            'handlers': ['console', 'error_file'],
+            'handlers': ['console'],
             'propagate': False
         }
     }
@@ -62,7 +47,6 @@ LOGGING_CONFIG = {
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
-_devlogger = logging.getLogger('piedmont-dev')
 logger = logging.getLogger('piedmont')
 
 
@@ -87,12 +71,12 @@ def critical(msg: object, *args, **kwargs):
 
 
 def devlog(msg: object, level=logging.DEBUG, *args, **kwargs):
-    _devlogger.log(level, msg, *args, **kwargs)
+    logging.getLogger('piedmont-dev').log(level, msg, *args, **kwargs)
 
 
 def set_dev_mode(flag=True):
     if flag:
-        _devlogger.setLevel(logging.DEBUG)
-        devlog(f'\n{"=" * 51}\n{">"*20} LOG START {"<"*20}\n{"=" * 51}')
+        logging.getLogger('piedmont-dev').setLevel(logging.DEBUG)
+        devlog(f'\n{"=" * 48}\n{">"*15} PIEDMONT DEV LOG {"<"*15}\n{"=" * 48}')
     else:
-        _devlogger.setLevel(logging.CRITICAL)
+        logging.getLogger('piedmont-dev').setLevel(logging.CRITICAL)
