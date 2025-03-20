@@ -39,7 +39,7 @@ class Piedmont():
             return wrapper
         return decorator
 
-    def send(self, messageId: str, value: T_PP_Message_Payload = "", uppercase=True):
+    def send(self, messageId: str, value: t.Union[str, t.List[t.Any], t.Dict[t.AnyStr, t.Any]] = "", uppercase=True):
         if uppercase:
             messageId = messageId.upper()
 
