@@ -34,6 +34,10 @@ class BaseConfig(dict):
     def port(self, value):
         self['PORT'] = str(value)
 
+    @property
+    def server(self):
+        return f'{self.host}:{self.port}'
+
 
 class FileConfig(BaseConfig):
 

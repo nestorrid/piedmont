@@ -10,7 +10,7 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': False,
     'formatters': {
         'simple': {
-            'format': "$ %(asctime)s [%(name)s][%(levelname)s]:\n> %(message)s"
+            'format': "$ %(asctime)s [%(name)s][%(levelname)s]:\t%(message)s"
         },
     },
     'handlers': {

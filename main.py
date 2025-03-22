@@ -1,6 +1,6 @@
 from piedmont import Piedmont
 
-pie = Piedmont()
+pie = Piedmont(debug=True)
 
 
 @pie.bridge('message')
@@ -14,4 +14,4 @@ if __name__ == "__main__":
             pass
     except KeyboardInterrupt as e:
         print('Exit.')
-        exit(0)
+        raise SystemExit(0)
