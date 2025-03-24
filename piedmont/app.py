@@ -99,10 +99,10 @@ class Piedmont():
         self.send('stack.all', storage.stack)
 
     def _show_dict(self, data):
-        self.send('dict.all', storage.data)
+        self.send('dict.all', storage.dict)
 
     def _show_list(self, data):
-        self.send('list.all', storage.array)
+        self.send('list.all', storage.list)
 
     def _index(self, data):
         try:
