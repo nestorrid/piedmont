@@ -77,37 +77,48 @@ class BaseStorage:
         self._list[key].insert(index, data)
         return self.list(key)
 
-    def remove(self, obj: any, key: str = 'default'):
-        l = self.list(key) or []
-        try:
-            l.remove(obj)
-        except ValueError:
-            pass
+    def remove(self, index: int, key: str = 'default'):
+        l = self.list(key)
+        if l is None:
+            raise KeyError(f'List `{key}` is not exists.')
+        if abs(index) >= len(l):
+            raise IndexError(
+                f'Index `{index}` is out of range for list `{key}`')
+        l.pop(index)
+
+    def index(self, idx: int, key: str = 'default') -> any:
+        self._list[key] = self.list(key) or []
+        return self._list[key][idx]
 
     def push(
             self, obj: t.Any,
             target: t.Literal['stack', 'queue'] = 'stack',
             key: str = 'default'
-    ) -> int:
+    ) -> t.List[t.Any]:
         data = _safe_load_json(obj)
         if target == 'stack':
             self._stack[key] = self.stack(key) or []
             self._stack[key].append(data)
-            return len(self.stack(key))
+            return self.stack(key)
         else:
             self._queue[key] = self.queue(key) or []
             self._queue[key].append(data)
-            return len(self.queue(key))
+            return self.queue(key)
 
     def pop(
         self,
         target: t.Literal['stack', 'queue'] = 'stack',
-        key: str = 'default'
+        key: str = 'default',
+        index: int = None
     ) -> any:
         if target == 'stack':
-            return self.stack(key).pop()
+            index = index or -1
+            if index >= len(self.stack(key)) and len(self.stack(key)) > 0:
+                index = -1
+            return self.stack(key).pop(index)
         else:
-            return self.queue(key).pop(0)
+            index = index or 0
+            return self.queue(key).pop(index)
 
     def peek(
         self,
@@ -170,26 +181,30 @@ class Storage(BaseStorage):
                     current[subkey] = {}
                     current = current[subkey]
 
-        try:
-            current[_convert_key(key_path[-1])] = value
-        except IndexError:
-            raise IndexError(
-                f'Index out of length for key: `{'.'.join(key_path)}`.')
+        if isinstance(current, dict):
+            current[key_path[-1]] = value
+        elif isinstance(current, list):
+            try:
+                current[_convert_key(key_path[-1])] = value
+            except IndexError:
+                current.append(value)
+
+        return value
 
     def set_value_by_key(
             self, key: str, value: any,
     ):
         key_path = key.split('.')
 
+        if _is_valid_number_string(key_path[0]) or _is_valid_number_string(key):
+            raise KeyPathError(key)
         data = _safe_load_json(value)
 
         if len(key_path) > 1:
-            if _is_valid_number_string(key_path[0]):
-                raise KeyPathError(key)
-
-            self._set_value_by_key_path(key_path, data)
+            return self._set_value_by_key_path(key_path, data)
         else:
             self.dict[key] = data
+            return data
 
     def get_value_by_key(self, key: str) -> str:
         key_path = key.split('.')
@@ -212,15 +227,6 @@ class Storage(BaseStorage):
                 key = int(key)
             current = current[key]
         return current
-
-    def get_value_at_index(self, idx: str | int) -> str:
-        try:
-            index = int(idx)
-            return self.list()[index]
-        except ValueError:
-            raise ValueError(f'Index `{idx}` is not a number.')
-        except IndexError:
-            raise IndexError(f'Index `{idx}` is out of range.')
 
 
 def _is_valid_number_string(num: str) -> bool:

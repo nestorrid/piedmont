@@ -56,7 +56,7 @@ class FileConfig(BaseConfig):
                 'Using default settings instead.'
             )
             self.update({
-                "APP_NAME": 'BridgeApp',
+                "APP_NAME": 'Piedmont',
                 'HOST': 'http://localhost',
                 'PORT': '9981'
             })
@@ -71,6 +71,6 @@ class Config(BaseConfig):
         port: str = None,
     ):
         super().__init__()
-        self.app_name = name or 'Bridge App'
+        self.app_name = name or 'Piedmont'
         self.host = host or 'http://localhost'
         self.port = port or '9981'

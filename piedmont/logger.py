@@ -10,8 +10,11 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': False,
     'formatters': {
         'simple': {
-            'format': "$ %(asctime)s [%(name)s][%(levelname)s]:\t%(message)s"
+            'format': "[Piedmont][%(levelname)s]:\t%(message)s"
         },
+        'detailed': {
+            'format': "$ %(asctime)s [%(name)s][%(levelname)s][%(threadName)s:%(process)d]::%(module)s::\t%(message)s"
+        }
     },
     'handlers': {
         'console': {
@@ -20,72 +23,69 @@ LOGGING_CONFIG = {
             'formatter': 'simple',
             'stream': sys.stdout
         },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'DEBUG',
+            'filename': 'piedmont.log',
+            'formatter': 'detailed',
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5
+        }
     },
     'loggers': {
         'piedmont': {
-            'level': 'INFO',
+            'level': 'ERROR',
+            'handlers': ['file'],
+            'propagate': False
+        },
+        'piedmont-console': {
+            'level': 'ERROR',
             'handlers': ['console'],
             'propagate': False
         }
     }
 }
 
+
 logging.config.dictConfig(LOGGING_CONFIG)
 
 logger = logging.getLogger('piedmont')
+console = logging.getLogger('piedmont-console')
 
 
 def info(msg: object, *args, **kwargs):
     logger.info(msg, *args, **kwargs)
+    console.info(msg, *args, **kwargs)
 
 
 def debug(msg: object, *args, **kwargs):
     logger.debug(msg, *args, **kwargs)
+    console.debug(msg, *args, **kwargs)
 
 
 def warning(msg: object, *args, **kwargs):
     logger.warning(msg, *args, **kwargs)
+    console.warning(msg, *args, **kwargs)
 
 
 def error(msg: object, *args, **kwargs):
     logger.error(msg, *args, **kwargs)
+    console.error(msg, *args, **kwargs)
 
 
 def critical(msg: object, *args, **kwargs):
     logger.critical(msg, *args, **kwargs)
-
-
-def _create_dev_logger():
-    l = logging.getLogger('piedmont-dev')
-    l.setLevel(logging.DEBUG)
-    h1 = logging.handlers.RotatingFileHandler('piedmont.log')
-    h1.setLevel(logging.DEBUG)
-    h2 = logging.StreamHandler(sys.stdout)
-    h1.setLevel(logging.DEBUG)
-    fmt_s = logging.Formatter(
-        "$ %(asctime)s [%(name)s][%(levelname)s]:\n> %(message)s")
-    fmt_d = logging.Formatter(
-        "$ %(asctime)s [%(name)s][%(levelname)s][%(threadName)s:%(process)d]::%(module)s::\n> %(message)s")
-    h1.setFormatter(fmt_d)
-    h2.setFormatter(fmt_s)
-    l.addHandler(h1)
-    l.addHandler(h2)
-
-    return l
-
-
-_dev_logger: logging.Logger = None
-
-
-def devlog(msg: object, level=logging.DEBUG, *args, **kwargs):
-    if _dev_logger:
-        _dev_logger.log(level, msg, *args, **kwargs)
+    console.critical(msg, *args, **kwargs)
 
 
 def set_dev_mode(flag=True):
-    global _dev_logger
     if flag:
-        _dev_logger = _create_dev_logger()
-        devlog(f'\n{"=" * 48}\n{">"*15} PIEDMONT DEV LOG {"<"*15}\n{"=" * 48}')
+        logger.setLevel(logging.DEBUG)
+        console.setLevel(logging.DEBUG)
+        console.debug('Set log level to: `DEBUG`.')
+        logger.debug(
+            f'\n{"=" * 48}\n{">"*15} PIEDMONT DEV LOG {"<"*15}\n{"=" * 48}'
+        )
     else:
-        logging.getLogger('piedmont-dev').setLevel(logging.CRITICAL)
+        logger.setLevel(logging.CRITICAL)
+        console.setLevel(logging.INFO)

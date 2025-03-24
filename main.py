@@ -1,5 +1,6 @@
 from piedmont import Piedmont
 from piedmont import storage
+from piedmont import logger
 
 pie = Piedmont(debug=True)
 
