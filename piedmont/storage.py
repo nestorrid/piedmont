@@ -8,7 +8,7 @@ from . import logger
 
 
 def _convert_key(key: str):
-    if key.isdigit():
+    if _is_valid_number_string(key):
         return int(key)
 
     return key
@@ -43,26 +43,26 @@ class BaseStorage:
     def data(self):
         return self._data
 
-    def append(self, obj: t.Any | t.Iterable):
-        if isinstance(obj, list):
-            self.array.extend(obj)
-        else:
+    def append(self, obj: t.Any, key: str = None):
+
+        try:
+            self.array.append(json.loads(obj))
+        except json.decoder.JSONDecodeError:
             self.array.append(obj)
 
     def insert(self, obj: any, index=0):
-        if index == -1:
-            self.array.append(obj)
-        else:
+        try:
+            self.array.insert(index, json.loads(obj))
+        except json.decoder.JSONDecodeError:
             self.array.insert(index, obj)
 
     def keys(self):
         return self.data.keys()
 
-    def push(self, obj: t.Any | t.Iterable[list]):
-        if isinstance(obj, list):
-            for item in obj:
-                self.stack.append(item)
-        else:
+    def push(self, obj: t.Any):
+        try:
+            self.stack.append(json.loads(obj))
+        except json.decoder.JSONDecodeError:
             self.stack.append(obj)
 
     def pop(self) -> any:
@@ -71,7 +71,7 @@ class BaseStorage:
     def peek(self) -> any:
         return self.stack[-1]
 
-    def clear(self, target: t.Literal['stack', 'array', 'data'] = 'data'):
+    def clear(self, target: t.Literal['stack', 'array', 'dict'] = 'dict'):
         if target == 'stack':
             self._stack = []
         elif target == 'array':
@@ -94,14 +94,17 @@ class BaseStorage:
 
 class Storage(BaseStorage):
 
-    def _set_value_by_key_chain(self, key_chain: list[str], value: any):
-        if key_chain[0].isdigit():
+    def _set_value_by_key_chain(
+        self, key_chain: list[str],
+        value: any
+    ):
+        if _is_valid_number_string(key_chain[0]):
             current = self.array
         else:
             current = self.data
 
         for subkey in key_chain[:-1]:
-            if subkey.isdigit():
+            if _is_valid_number_string(subkey):
                 current = current[int(subkey)]
             else:
                 try:
@@ -113,18 +116,23 @@ class Storage(BaseStorage):
         try:
             current[_convert_key(key_chain[-1])] = value
         except IndexError:
-            logger.error(
+            raise IndexError(
                 f'Index out of length for key: `{'.'.join(key_chain)}`.')
 
-    def set_value_by_key(self, key: str, value: any, type: t.Literal['text', 'json'] = 'text'):
+    def set_value_by_key(
+            self, key: str, value: any,
+    ):
         key_chain = key.split('.')
-        if type == 'json':
-            value = json.loads(value)
+
+        try:
+            data = json.loads(value)
+        except json.decoder.JSONDecodeError:
+            data = value
 
         if len(key_chain) > 1:
-            self._set_value_by_key_chain(key_chain, value)
+            self._set_value_by_key_chain(key_chain, data)
         else:
-            self.data[key] = value
+            self.data[key] = data
 
     def get_value_by_key(self, key: str) -> str:
         key_chain = key.split('.')
@@ -134,29 +142,33 @@ class Storage(BaseStorage):
             else:
                 return self.data[key]
         except KeyError:
-            logger.info(
-                f'Can not find value for key: `{key}`, return empty string instead.')
-            return ""
+            raise KeyError(
+                f'Can not find value for key: `{key}`.')
 
     def _get_value_by_key_chain(self, key_chain: list[str]) -> any:
         current = self.data
         for key in key_chain:
-            if isinstance(current, list) and key.isdigit():
+            if isinstance(current, list) and _is_valid_number_string(key):
                 key = int(key)
             current = current[key]
         return current
 
     def get_value_at_index(self, idx: str | int) -> str:
-        if isinstance(idx, str) and not idx.isdigit():
-            logger.warning(
-                f'Index `{idx}` is not a number. return empty string instead.')
-            return ""
         try:
-            return self.array[int(idx)]
+            index = int(idx)
+            return self.array[index]
+        except ValueError:
+            raise ValueError(f'Index `{idx}` is not a number.')
         except IndexError:
-            logger.info(
-                f'Index `{id}` is out of range. return empty string instead.')
-            return ""
+            raise IndexError(f'Index `{idx}` is out of range.')
+
+
+def _is_valid_number_string(num: str) -> bool:
+    try:
+        temp = int(num)
+        return True
+    except ValueError:
+        return False
 
 
 storage = Storage()

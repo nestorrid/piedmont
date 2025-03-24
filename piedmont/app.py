@@ -15,6 +15,21 @@ from . import logger
 PP_BRIDGE_APP = 'ppBridgeApp'
 PP_MESSAGE = 'ppMessage'
 
+BUILD_IN_MESSAGES = [
+    ['pie.push', '_push'],
+    ['pie.pop', '_pop'],
+    ['pie.append', '_append'],
+    ['pie.peek', '_peek'],
+    ['pie.insert', '_insert'],
+    ['pie.index', '_index'],
+    ['pie.list', '_show_list'],
+    ['pie.stack', '_show_stack'],
+    ['pie.dict', '_show_dict'],
+    ['pie.help', '_show_help'],
+    ['pie.set', '_set_value_by_key'],
+    ['pie.get', '_get_value_by_key']
+]
+
 
 class Piedmont():
 
@@ -35,20 +50,73 @@ class Piedmont():
         self._config = config or Config()
         self.separator = separator
         self._regist_handlers()
-        self._regist_data_handlers()
+        self._regist_buildin_handlers()
         if auto_connect:
             self.connect()
 
-    def _regist_data_handlers(self):
-        self._handler_mapper.setdefault(
-            'pie.push', self._push
-        )
-        self._handler_mapper.setdefault(
-            'pie.pop', self._pop
-        )
-        self._handler_mapper.setdefault(
-            'pie.append', self._append
-        )
+    def start(self):
+        try:
+            while True:
+                pass
+        except KeyboardInterrupt:
+            if self._client.connected:
+                self._client.disconnect()
+
+    def _regist_buildin_handlers(self):
+        for buildin in BUILD_IN_MESSAGES:
+            self._handler_mapper.setdefault(
+                buildin[0],
+                getattr(self, buildin[1])
+            )
+
+    def _set_value_by_key(self, data):
+        if not isinstance(data, dict) or data.get('key', None) is None:
+            logger.warning(
+                f'You need to provide a key for `pie.set`, like `pie.set{self.separator}key`')
+            self.error(
+                f'You need to provide a key for `pie.set`, like `pie.set{self.separator}key`')
+        key = data['key']
+        value = data['value']
+        try:
+            storage.set_value_by_key(key, value)
+        except IndexError as e:
+            self.error(f'{e}')
+            logger.error(f'Piedmont.Error: {e}')
+
+    def _get_value_by_key(self, data):
+        try:
+            result = storage.get_value_by_key(data['key'])
+            logger.devlog(data)
+            self.send(f'key::{data['key']}', result)
+        except KeyError as e:
+            self.error(f'{e}')
+            logger.error(f'Piedmont.Error: {e}')
+
+    def _show_help(self, data):
+        pass
+
+    def _show_stack(self, data):
+        self.send('stack.all', storage.stack)
+
+    def _show_dict(self, data):
+        self.send('dict.all', storage.data)
+
+    def _show_list(self, data):
+        self.send('list.all', storage.array)
+
+    def _index(self, data):
+        try:
+            result = storage.get_value_at_index(data)
+            self.send(f'index::{data}', result)
+        except IndexError as e:
+            logger.error(f'Piedmont.Error: {e}')
+            self.error(f'{e}')
+        except ValueError as e:
+            logger.error(f'Piedmont.Error: {e}')
+            self.error(f'{e}')
+
+    def error(self, msg: str):
+        self.send('pie.error', msg)
 
     def _append(self, data):
         storage.append(data)
@@ -57,8 +125,30 @@ class Piedmont():
         storage.push(data)
 
     def _pop(self, data):
-        result = storage.pop()
-        self.send('popout', result)
+        try:
+            result = storage.pop()
+            self.send('pop.resp', result)
+        except IndexError:
+            logger.warning(f'Stack storage is empty.')
+            self.send('pop.empty')
+
+    def _peek(self, data):
+        result = storage.peek()
+        self.send('peek.resp', result)
+
+    def _insert(self, data):
+        logger.devlog(f'receive dynamic message data: `{data}`')
+        value = data.get('value', None)
+        if not value:
+            logger.warning(f'You must provide a valid value for `pie.insert`')
+            return
+
+        idx = data.get('key', None)
+        if idx and not idx.isdigit():
+            logger.warning(f'`pie.insert::` must use an int number as index.')
+            return
+        idx = idx or 0
+        storage.insert(value, int(idx))
 
     def _regist_handlers(self):
         self._client.on(PP_MESSAGE, self._message_handler)
@@ -69,31 +159,35 @@ class Piedmont():
         temp = message.split(self.separator)
         cmd = temp[0]
         key = temp[1]
-        if cmd == 'pie.set':
-            storage.set_value_by_key(key, data.get('value', None))
-        elif cmd == 'pie.setJson':
-            storage.set_value_by_key(key, data.get('value', None), 'json')
-        elif cmd == 'pie.get':
-            pass
-        elif cmd == '':
-            storage.append(data)
 
-        self.send('data', json.dumps(storage._data))
-        self.send('stack', json.dumps(storage._stack))
-        self.send('array', json.dumps(storage._array))
+        handler = self._handler_mapper.get(cmd, None)
+        if handler:
+            logger.info(f'Receive dynamic message from ProtoPie Connect.')
+            logger.info(
+                f'Message: `{cmd}`, command key: `{key}`. Data: `{data}`.')
+            logger.devlog(
+                f'Handler: `{handler.__module__}.{handler.__name__}`.')
+
+            return handler({
+                'key': key,
+                'value': data.get('value', None)
+            })
+        else:
+            logger.devlog(f'No handler for message: "{cmd}"')
 
     def _message_handler(self, data):
         msgId = data['messageId']
+        logger.devlog(f'Receive message: `{msgId}`')
         if len(msgId.split(self.separator)) > 1:
-            self._dynamic_message_handler(msgId, data)
-            return
+            logger.devlog(f'Message `{msgId}` is a dynamic message.')
+            return self._dynamic_message_handler(msgId, data)
 
         handler = self._handler_mapper.get(msgId, None)
         if handler:
             logger.info(f'Receive message from ProtoPie Connect.')
             logger.info(f'Message: `{msgId}`. Data: `{data}`.')
             logger.devlog(f'Handler: `{handler.__name__}`.')
-            handler(data.get('value', None))
+            return handler(data.get('value', None))
         else:
             logger.devlog(f'No handler for message: "{msgId}"')
 
@@ -116,19 +210,17 @@ class Piedmont():
             )
             raise SystemExit(1)
 
-    def bridge(self, messageId: str, **options: t.Any):
+    def bridge(
+        self,
+        messageId: str,
+        is_dynamic: bool = False,
+    ):
         def decorator(func):
-            self._regist_bridge_handler(messageId, func)
+            key = messageId
+            if is_dynamic:
+                key = messageId + self.separator
 
-            @functools.wraps(func)
-            def wrapper(*args, **kwargs):
-                return func(*args, **kwargs)
-            return wrapper
-        return decorator
-
-    def storage(self, messageId: str):
-        def decorator(func):
-            self._regist_bridge_handler(messageId+self.separator, func)
+            self._regist_bridge_handler(key, func)
 
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -158,4 +250,5 @@ class Piedmont():
             PP_MESSAGE, {'messageId': messageId, 'value': data})
 
     def __del__(self):
-        self._client.disconnect()
+        if self._client.connected:
+            self._client.disconnect()

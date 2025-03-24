@@ -1,4 +1,5 @@
 from piedmont import Piedmont
+from piedmont import storage
 
 pie = Piedmont(debug=True)
 
@@ -9,9 +10,4 @@ def handler(data):
 
 
 if __name__ == "__main__":
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt as e:
-        print('Exit.')
-        raise SystemExit(0)
+    pie.start()

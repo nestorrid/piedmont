@@ -1,19 +1,20 @@
 import pytest
-from piedmont.storage import Storage
+from piedmont.storage import Storage, _is_valid_number_string
 
 
 @pytest.fixture(scope='function')
 def storage():
     s = Storage()
-    s.append([f'test{i}' for i in range(5)])
-    s.push([f'string{i}' for i in range(5)])
+    s._array = [f'test{i}' for i in range(5)]
+    s._stack = [f'string{i}' for i in range(5)]
     s._data = {f'key{i}': f'value{i}' for i in range(5)}
     return s
 
 
 def test_append_storage_will_add_to_array(storage):
+    count = storage.list_count
     storage.append('test')
-    assert storage.list_count == 6
+    assert storage.list_count == count + 1
 
 
 def test_push_object_will_add_to_stack(storage):
@@ -91,8 +92,9 @@ def test_clear_data(storage):
 
 
 def test_get_value_by_none_digit_index(storage):
-    result = storage.get_value_at_index('index')
-    assert result == ""
+    with pytest.raises(ValueError) as exc_info:
+        result = storage.get_value_at_index('index')
+    assert exc_info.type == ValueError
 
 
 def test_get_value_by_index(storage):
@@ -127,3 +129,9 @@ def test_get_value_by_key_chain(storage):
     assert len(result) == 5
     result = storage.get_value_by_key('key1.key2.3')
     assert result == 4
+
+
+def test_is_valid_number_string():
+    assert _is_valid_number_string('asdf') == False
+    assert _is_valid_number_string('123') == True
+    assert _is_valid_number_string('-10') == True
