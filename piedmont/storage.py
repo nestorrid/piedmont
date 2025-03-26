@@ -5,7 +5,7 @@ from pprint import pprint
 import json
 
 from . import logger
-from .errors import KeyPathError
+from .errors import KeyPathError, StackNotExists
 
 
 def _convert_key(key: str):
@@ -113,9 +113,12 @@ class BaseStorage:
     ) -> any:
         if target == 'stack':
             index = index or -1
-            if index >= len(self.stack(key)) and len(self.stack(key)) > 0:
-                index = -1
-            return self.stack(key).pop(index)
+            logger.debug(f'Pop stack with name: `{key}`')
+            if (stack := self.stack(key)) is not None:
+                if index >= len(stack) and len(stack) > 0:
+                    index = -1
+                return stack.pop(index)
+            raise StackNotExists(key)
         else:
             index = index or 0
             return self.queue(key).pop(index)
@@ -130,7 +133,7 @@ class BaseStorage:
         else:
             return self.queue(key)[0]
 
-    def clear(self, target: t.Literal['stack', 'list', 'dict', 'queue'] = 'dict'):
+    def clear(self, target: t.Literal['stack', 'list', 'dict', 'queue', 'all'] = 'dict'):
         if target == 'stack':
             self._stack = {
                 "default": []
@@ -143,7 +146,18 @@ class BaseStorage:
             self._queue = {
                 'default': []
             }
+        elif target == 'dict':
+            self._dict = {}
         else:
+            self._stack = {
+                "default": []
+            }
+            self._list = {
+                "default": []
+            }
+            self._queue = {
+                'default': []
+            }
             self._dict = {}
 
     def show_dict(self):
@@ -177,7 +191,10 @@ class Storage(BaseStorage):
             else:
                 try:
                     current = current[subkey]
+                    logger.debug(f'>>> {current}')
                 except KeyError:
+                    logger.debug(
+                        f'Can not find key:`{subkey}`, create dict for this key.')
                     current[subkey] = {}
                     current = current[subkey]
 
@@ -201,6 +218,7 @@ class Storage(BaseStorage):
         data = _safe_load_json(value)
 
         if len(key_path) > 1:
+            logger.debug(f'set value for key path: {key_path}')
             return self._set_value_by_key_path(key_path, data)
         else:
             self.dict[key] = data

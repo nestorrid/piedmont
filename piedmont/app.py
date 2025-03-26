@@ -8,7 +8,7 @@ import socketio.exceptions
 
 from .config import Config
 from .typing import T_Handler, T_Mapper
-from .errors import DuplicateHandlerError, KeyPathError
+from .errors import DuplicateHandlerError, KeyPathError, StackNotExists
 from .storage import storage
 from . import logger
 
@@ -44,7 +44,8 @@ BUILD_IN_MESSAGES = [
     ['pie.queue', '_show_queue'],
     ['pie.dict', '_show_dict'],
     # help message.
-    ['pie.help', '_show_help']
+    ['pie.help', '_show_help'],
+    ['pie.clear', '_clear']
 ]
 
 
@@ -189,11 +190,15 @@ class Piedmont():
                 idx = int(_safe_load_data(data))
             except ValueError:
                 idx = None
+            except TypeError:
+                idx = None
             result = storage.pop(target, key, idx)
             self.send(f'pop.{key}', result)
         except IndexError:
             logger.info(f'{target}.{key} storage is empty.')
             self.send(f'pop.{key}.empty')
+        except StackNotExists as e:
+            self._error_message(f'{e}')
 
     def _peek(
         self, data,
@@ -389,6 +394,9 @@ class Piedmont():
 
         self._client.emit(
             PP_MESSAGE, {'messageId': messageId, 'value': data})
+
+    def _clear(self, data):
+        storage.clear('all')
 
     def __del__(self):
         if self._client.connected:
